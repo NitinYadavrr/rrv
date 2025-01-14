@@ -1,65 +1,44 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy ASP.Net Core app to Azure Web App - rrv
+name: Build and Deploy .NET App
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v4
+      # Step 2: Setup .NET environment
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '8.x'
+          dotnet-version: 7.0.x  # Adjust to your target .NET version
 
-      - name: Build with dotnet
+      # Step 3: Locate project directory (Optional Debugging)
+      - name: Debug project directory
+        run: |
+          echo "Current Directory:"
+          pwd
+          echo "Files in Directory:"
+          ls -la
+          echo "Finding .csproj file:"
+          find . -name "*.csproj"
+
+      # Step 4: Navigate to the project directory and build the project
+      - name: Build .NET project
         run: dotnet build --configuration Release
+        working-directory: ./path/to/project-directory # Replace with the relative path to your project
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
-
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write #This is required for requesting the JWT
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: .net-app
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_4D512C55266F4F52860B5E925745AB18 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_33772BEF0CB0465C87B184284BA0EE83 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F19B26077B954E91B24F665AD81842FE }}
-
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'rrv'
-          slot-name: 'Production'
-          package: .
-          
+      # Step 5: Deploy or publish (optional)
+      - name: Publish App (Optional)
+        run: dotnet publish --configuration Release --output ./publish
+        working-directory: ./path/to/project-directory
